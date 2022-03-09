@@ -7,5 +7,6 @@
 ## Usage
 
 ```tcl
-json "argument0"
+json.decode '{"alfa": 1}' | as d
+json.decode '[1, 2, 3]' | as l
 ```
