@@ -4,30 +4,6 @@ import std.json;
 import til.nodes;
 
 
-class JsonDict : Dict
-{
-    JSONValue values;
-
-    this(JSONValue values)
-    {
-        this.values = values;
-    }
-    override Item opIndex(string k)
-    {
-        JSONValue v;
-        try
-        {
-            v = values[k];
-        }
-        catch (JSONException)
-        {
-            throw new Exception("key " ~ k ~ " not found");
-        }
-
-        return JsonToItem(v);
-    }
-}
-
 Item JsonToItem(JSONValue v)
 {
     final switch (v.type)
@@ -50,9 +26,54 @@ Item JsonToItem(JSONValue v)
                     .array()
             );
         case JSONType.object:
-            return new JsonDict(v);
+            auto dict = new Dict();
+            auto obj = v.object();
+            foreach (key; obj.byKey)
+            {
+                auto value = obj[key];
+                dict[key] = JsonToItem(value);
+            }
+            return dict;
         case JSONType.null_:
             throw new Exception("shit");
+    }
+}
+
+JSONValue ItemToJson(Item item, bool strict=false)
+{
+    switch (item.type)
+    {
+        case ObjectType.Boolean:
+            return JSONValue(item.toBool());
+        case ObjectType.Integer:
+            return JSONValue(item.toInt());
+        case ObjectType.Float:
+            return JSONValue(item.toFloat());
+        case ObjectType.Atom:
+        case ObjectType.String:
+            return JSONValue(item.toString());
+        case ObjectType.SimpleList:
+            SimpleList list = cast(SimpleList)item;
+            JSONValue[] values = list.items
+                    .map!(x => ItemToJson(x, strict))
+                    .array;
+            return JSONValue(values);
+        case ObjectType.Dict:
+            Dict dict = cast(Dict)item;
+            JSONValue[string] json;
+            foreach (key; dict.values.byKey)
+            {
+                json[key] = ItemToJson(dict[key], strict);
+            }
+            return JSONValue(json);
+        // case ObjectType.Vector:
+        // item.typeName = {byte_vector|int_vector|long_vector|...}
+        default:
+            if (strict)
+            {
+                throw new Exception("Cannot decode type " ~ to!string(item.type));
+            }
+            return JSONValue(item.toString());
     }
 }
 
@@ -68,6 +89,15 @@ extern (C) CommandsMap getCommands(Escopo escopo)
             JSONValue json = parseJSON(arg.toString());
             auto object = JsonToItem(json);
             context.push(object);
+        }
+        return context;
+    });
+    commands["encode"] = new Command((string path, Context context)
+    {
+        foreach (arg; context.items)
+        {
+            auto json = ItemToJson(arg);
+            context.push(json.toString());
         }
         return context;
     });
