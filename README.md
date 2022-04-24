@@ -7,9 +7,13 @@
 ## Usage
 
 ```tcl
-json.decode '{"alfa": 1}' | as d
-json.decode '[1, 2, 3]' | as l
+> json.decode '{"alfa": 1}'
+ dict(alfa=1)
+> json.decode '[1, 2, 3]'
+ (1 2 3)
 
-dict (alfa 1) | dict.encode | as object_string
-dict.encode (1 2 3) | as list_string
+> dict (alfa 1) | json.encode
+ {"alfa":1}
+> json.encode (1 2 3)
+ [1,2,3]
 ```
