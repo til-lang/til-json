@@ -35,7 +35,7 @@ Item JsonToItem(JSONValue v)
             }
             return dict;
         case JSONType.null_:
-            throw new Exception("shit");
+            return new String("<NULL>");
     }
 }
 
