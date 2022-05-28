@@ -51,7 +51,15 @@ JSONValue ItemToJson(Item item, bool strict=false)
             return JSONValue(item.toFloat());
         case ObjectType.Atom:
         case ObjectType.String:
-            return JSONValue(item.toString());
+            auto s = item.toString();
+            if (s == "<NULL>")
+            {
+                return JSONValue(null);
+            }
+            else
+            {
+                return JSONValue(item.toString());
+            }
         case ObjectType.SimpleList:
             SimpleList list = cast(SimpleList)item;
             JSONValue[] values = list.items
